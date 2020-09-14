@@ -17,4 +17,8 @@
             <directory>src</directory>
         </whitelist>
     </filter>
+
+    <php>
+        <env phpVersion="8.0" phpVersionOperator="&lt;" name="SYMFONY_MAX_PHPUNIT_VERSION" value="7.5" />
+    </php>
 </phpunit>
