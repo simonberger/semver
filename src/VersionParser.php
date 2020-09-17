@@ -576,4 +576,22 @@ class VersionParser
                 return $stability;
         }
     }
+
+    public function extractStability($version)
+    {
+        if (preg_match('{[._-](?:' . self::$stabilitiesRegex . ')[0-9]*$}i', $version, $match)) {
+            return $match[0];
+        }
+
+        return '';
+    }
+
+    public function removeStability($version)
+    {
+        if (preg_match('{[._-](?:' . self::$stabilitiesRegex . ')[0-9]*$}i', $version, $match)) {
+            $version = substr($version, 0, strlen($version) - strlen($match[0]));
+        }
+
+        return $version;
+    }
 }
