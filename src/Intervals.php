@@ -228,9 +228,9 @@ class Intervals
             if ($intervals['branches']['exclude']) {
                 if (\count($constraints) > 1) {
                     return new MultiConstraint(array_merge(
-                            array(new MultiConstraint($constraints, false)),
-                            $devConstraints
-                        ), true);
+                        array(new MultiConstraint($constraints, false)),
+                        $devConstraints
+                    ), true);
                 }
 
                 if (\count($constraints) === 1 && (string)$constraints[0] === (string)Interval::fromZero()) {
@@ -534,7 +534,7 @@ class Intervals
                     }
                 } else { // base and conflict intersect
                     $cs = $conflictInterval->getStart()->getLowerBound();
-                    $stabilitySuffix = $baseStability !== '' ? ('-' . $baseStability) : '';
+                    $stabilitySuffix = $baseStability !== '' ? $baseStability : '';
 
                     $versionParts[] = array(
                         'operator' => $cs->isInclusive() ? '<' : '<=',
@@ -547,33 +547,31 @@ class Intervals
                             'operator' => $ce->isInclusive() ? '>' : '=>',
                             'version' => $vp->removeStability($ce->getVersion()) . $stabilitySuffix
                         );
+                        $b = $baseInterval->getEnd()->getUpperBound();
+                        if (!$b->isPositiveInfinity()) {
+                            $versionParts[] = array(
+                                'operator' => $b->isInclusive() ? '<=' : '<',
+                                'version' => $b->getVersion()
+                            );
+                        }
                     }
                 }
                 // Base interval is inside conflict
             } else if ($baseInterval->getEnd()->getUpperBound()->compareTo($conflictInterval->getEnd()->getUpperBound(), '>')) {
-                $b = $conflictInterval->getEnd()->getUpperBound();
+                $ce = $conflictInterval->getEnd()->getUpperBound();
+                $stabilitySuffix = $baseStability !== '' ? $baseStability : '';
                 $versionParts[] = array(
-                    'operator' => $b->isInclusive() ? '>' : '>=',
-                    'version' => $b->getVersion()
+                    'operator' => $ce->isInclusive() ? '>' : '>=',
+                    'version' => $vp->removeStability($ce->getVersion()) . $stabilitySuffix
                 );
+                $b = $baseInterval->getEnd()->getUpperBound();
+                if (!$b->isPositiveInfinity()) {
+                    $versionParts[] = array(
+                        'operator' => $b->isInclusive() ? '<=' : '<',
+                        'version' => $b->getVersion()
+                    );
+                }
                 $conflictInterval = next($conflictIntervals);
-            }
-        }
-
-        $conflictInterval = end($conflictIntervals);
-        $baseInterval = end($baseIntervals['numeric']);
-
-        $conflictStability = $vp->extractStability($conflictInterval->getStart()->getLowerBound());
-        $baseStability = $vp->extractStability($baseInterval->getStart()->getLowerBound()->getVersion());
-        $skipConflict = $conflictStability !== '' &&  $conflictStability !== $baseStability;
-
-        if ($skipConflict || $baseInterval->getEnd()->getUpperBound()->compareTo($conflictInterval->getEnd()->getUpperBound(), '>')) {
-            $b = $baseInterval->getEnd()->getUpperBound();
-            if (!$b->isPositiveInfinity()) {
-                $versionParts[] = array(
-                    'operator' => $b->isInclusive() ? '<=' : '<',
-                    'version' => $b->getVersion()
-                );
             }
         }
 
@@ -591,7 +589,7 @@ class Intervals
             $i++;
         }
 
-        $newConstraint = $vp->parseConstraints($versionString);
+        $newConstraint = $vp->parseConstraints(trim($versionString));
 
         return self::compactConstraint($newConstraint);
     }
